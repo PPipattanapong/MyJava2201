@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>สงครามแห่งความมืด</title>
+</head>
+<body>
+    <pre id="gameText"></pre>
+    <input type="text" id="userInput" autofocus placeholder="พิมพ์คำตอบที่นี่...">
+    
+    <script>
+        class Game {
+            constructor() {
+                this.inventory = [];
+                this.isAlive = true;
+                this.output = document.getElementById("gameText");
+                this.input = document.getElementById("userInput");
+                
+                this.input.addEventListener("keypress", (event) => {
+                    if (event.key === "Enter" && this.isAlive) {
+                        this.handleInput();
+                    }
+                });
+
+                this.startGame();
+            }
+
+            print(text) {
+                this.output.innerHTML += text + "\n";
+            }
+
+            startGame() {
+                this.inventory = [];
+                this.isAlive = true;
+                this.output.innerHTML = "";
+                this.print("คุณตื่นขึ้นมาในเมืองที่ถูกครอบงำด้วยความมืด...");
+                this.print("คุณไม่มีอาวุธหรือเครื่องมือใดๆ แต่คุณต้องหาทางเอาตัวรอด");
+                this.print("คุณเห็นทางเลือกสองทาง: (มองไปรอบๆ / วิ่งไปหาสถานีรถไฟ)");
+                this.print("พิมพ์คำว่า 'คลัง' เพื่อดูช่องเก็บของตลอดเวลา");
+                
+                this.waitForInput((answer) => {
+                    if (this.checkValidInput(answer, ["มองไปรอบๆ", "วิ่งไปหาสถานีรถไฟ"])) {
+                        if (answer === "มองไปรอบๆ") {
+                            this.print("คุณมองไปรอบๆ และพบกล่องเก็บอาวุธทิ้งอยู่ข้างๆ");
+                            this.scene2();
+                        } else if (answer === "วิ่งไปหาสถานีรถไฟ") {
+                            this.print("คุณวิ่งไปที่สถานีรถไฟ แต่พบว่ามีศัตรูอยู่ข้างหน้า");
+                            this.scene3();
+                        }
+                    }
+                });
+            }
+
+            handleInput() {
+                const userInput = this.input.value.trim();
+                this.input.value = ""; // Clear the input field
+
+                if (userInput === "คลัง") {
+                    this.print("คุณมี: " + (this.inventory.join(", ") || "ไม่มีไอเทม"));
+                } else if (this.currentCallback) {
+                    this.currentCallback(userInput);
+                }
+            }
+
+            checkValidInput(answer, validAnswers) {
+                if (!validAnswers.includes(answer)) {
+                    this.print("คำตอบไม่ถูกต้อง กรุณาพิมพ์ใหม่.");
+                    return false;
+                }
+                return true;
+            }
+
+            scene2() {
+                this.print("\nคุณพบกล่องเก็บอาวุธทิ้งอยู่ในมุมหนึ่ง");
+                this.print("คุณจะเปิดกล่องนี้หรือไม่? (เปิด / ไม่เปิด)");
+
+                this.waitForInput((answer) => {
+                    if (this.checkValidInput(answer, ["เปิด", "ไม่เปิด"])) {
+                        if (answer === "เปิด") {
+                            this.print("คุณพบปืนไรเฟิลและลูกกระสุนหลายชุด");
+                            this.inventory.push("ปืนไรเฟิล", "ลูกกระสุน");
+                        } else {
+                            this.print("คุณตัดสินใจไม่เปิดกล่องและเดินต่อไป...");
+                        }
+                        this.scene4();
+                    }
+                });
+            }
+
+            scene3() {
+                this.print("\nคุณพบว่าศัตรูกำลังเข้ามาใกล้และคุณไม่มีอาวุธ!");
+                this.print("คุณจะซ่อนตัวหรือสู้? (ซ่อน / สู้)");
+
+                this.waitForInput((answer) => {
+                    if (this.checkValidInput(answer, ["ซ่อน", "สู้"])) {
+                        if (answer === "ซ่อน") {
+                            this.print("คุณซ่อนตัวอยู่ในความมืดและหลบหนีได้สำเร็จ");
+                            this.scene4();
+                        } else if (answer === "สู้") {
+                            this.print("คุณพยายามสู้กับศัตรู แต่ไม่มีอาวุธเลย!");
+                            this.die();
+                        }
+                    }
+                });
+            }
+
+            scene4() {
+                this.print("\nคุณเดินไปจนถึงกลางเมือง และพบว่ามีศัตรูจำนวนมากอยู่ข้างหน้า");
+
+                if (this.inventory.length === 0) { // ไม่มีอาวุธ
+                    this.print("คุณไม่มีอาวุธ! คุณจะหลบหนีหรือซ่อนตัว? (หลบหนี / ซ่อนตัว)");
+                } else { // มีอาวุธ
+                    this.print("คุณมีปืนไรเฟิล! คุณจะหลบหนีหรือสู้กับพวกมัน? (หลบหนี / สู้)");
+                }
+
+                this.waitForInput((answer) => {
+                    if (this.checkValidInput(answer, ["หลบหนี", "ซ่อนตัว", "สู้"])) {
+                        if (answer === "หลบหนี") {
+                            this.print("คุณใช้ทักษะการหลบซ่อนเพื่อหลบหนีจากการโจมตีได้สำเร็จ");
+                            this.scene5();
+                        } else if (answer === "ซ่อนตัว") {
+                            this.print("คุณซ่อนตัวอยู่ในความมืดและหลบหนีได้สำเร็จ");
+                            this.scene5();
+                        } else if (answer === "สู้" && this.inventory.length > 0) {
+                            this.print("คุณใช้ปืนไรเฟิลยิงศัตรูได้หลายคน แต่เหลือศัตรูอีกมาก!");
+                            this.scene6();
+                        } else {
+                            this.print("คุณไม่มีอาวุธพอที่จะสู้และถูกโจมตีจนล้มลง!");
+                            this.die();
+                        }
+                    }
+                });
+            }
+
+            scene5() {
+                this.print("\nคุณหลบหนีไปจนถึงเขตปลอดภัย แต่ศัตรูกำลังไล่ตามคุณมาจนถึงที่");
+                this.print("คุณจะสู้กับพวกมันหรือหนีต่อไป? (สู้ / หนี)");
+
+                this.waitForInput((answer) => {
+                    if (this.checkValidInput(answer, ["สู้", "หนี"])) {
+                        if (answer === "สู้") {
+                            if (this.inventory.includes("ปืนไรเฟิล")) {
+                                this.print("คุณใช้ปืนไรเฟิลยิงศัตรูจำนวนหนึ่ง และสามารถเอาชนะพวกมันได้");
+                                this.print("คุณสามารถหนีไปได้สำเร็จ!");
+                                this.endGame(true);
+                            } else {
+                                this.print("คุณไม่มีอาวุธที่เพียงพอและถูกศัตรูโจมตีจนล้มลง!");
+                                this.die();
+                            }
+                        } else {
+                            this.print("คุณหนีไปได้สำเร็จ แต่เสียอาวุธไปทั้งหมด");
+                            this.inventory = [];
+                            this.endGame(true);
+                        }
+                    }
+                });
+            }
+
+            scene6() {
+                this.print("\nคุณต่อสู้กับศัตรูจนได้รับบาดเจ็บ แต่ยังคงมีศัตรูเหลืออยู่");
+                this.print("คุณจะพยายามสู้หรือถอยหนี? (สู้ / ถอย)");
+
+                this.waitForInput((answer) => {
+                    if (this.checkValidInput(answer, ["สู้", "ถอย"])) {
+                        if (answer === "สู้" && this.inventory.includes("ปืนไรเฟิล")) {
+                            this.print("คุณยิงศัตรูจนล้มได้หลายคน แต่ยังมีอีกหลายคนที่กำลังโจมตีคุณ");
+                            this.print("คุณได้รับบาดเจ็บหนัก แต่ยังคงมีชีวิตรอด!");
+                            this.endGame(true);
+                        } else if (answer === "ถอย") {
+                            this.print("คุณถอยหนีไปจนถึงเขตปลอดภัย แต่ต้องทิ้งอาวุธที่เหลือ");
+                            this.inventory = [];
+                            this.endGame(true);
+                        } else {
+                            this.print("คุณพยายามสู้แต่ได้รับบาดเจ็บหนักจนเสียชีวิต");
+                            this.die();
+                        }
+                    }
+                });
+            }
+
+            die() {
+                this.print("\nคุณตายแล้ว... ไม่สามารถพิมพ์ข้อความได้อีก");
+                this.isAlive = false;
+                this.input.style.display = "none"; // ซ่อนช่องพิมพ์หลังจากเกมจบ
+            }
+
+            endGame(success) {
+                if (success) {
+                    this.print("\nคุณรอดชีวิตและหนีไปได้สำเร็จ!");
+                } else {
+                    this.print("\nคุณพ่ายแพ้และเสียชีวิต...");
+                }
+                this.isAlive = false;
+                this.input.style.display = "none"; // ซ่อนช่องพิมพ์หลังจากเกมจบ
+            }
+
+            waitForInput(callback) {
+                this.currentCallback = callback;
+            }
+        }
+
+        let game = new Game();
+    </script>
+</body>
+</html>
